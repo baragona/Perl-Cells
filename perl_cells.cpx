@@ -1,0 +1,61 @@
+#!/usr/bin/perl -w
+
+use strict;
+use POSIX qw(:sys_wait_h);
+use Fcntl qw(:flock);
+use File::Spec;
+use JSON::XS;
+use CGI qw(-compile :standard escape escapeHTML);
+use Data::Dumper;
+use IO::Socket::UNIX qw( SOCK_STREAM );
+
+
+use cells;
+
+my $root_dir = 'perl_cells_data';
+
+
+
+sub front_page {
+    my $content = '';
+
+    $content .= textarea(
+                -value   => '',
+                -cols    => 90,
+                -rows    => 5,
+                -id      => 'area'
+            );
+
+    print header (),
+        start_html(
+            -title  => "Perl Cells",
+            -style  => [],
+            -script => [
+                {
+                    -language => 'javascript',
+                    -src      => "/js/jquery-1.9.0.min.js"
+                }
+            ]
+        )
+    ,$content;
+
+}
+
+
+cells::delete_temp_files();
+cells::prep_and_check_dir(cells::pidlocks_dir($root_dir));
+
+my @pids = cells::get_active_pids();
+
+print Dumper \@pids;
+
+my $pid = $pids[0];
+if($pid){
+    my $mesg = {code => $ARGV[0]};
+    my $resp = cells::send_hash_to_pid_and_wait_for_response($mesg, $pid);
+    print Dumper $resp;
+}else{
+    warn "No process to send commands to";
+}
+
+#front_page();
