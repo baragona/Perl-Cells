@@ -4,7 +4,6 @@ use strict;
 use POSIX qw(:sys_wait_h mkfifo);
 use Fcntl qw(:flock);
 use File::Spec;
-use JSON::XS;
 use Lexical::Persistence;
 use IO::Socket::UNIX qw( SOCK_STREAM SOMAXCONN );
 use Data::Dumper;

@@ -4,7 +4,7 @@ use POSIX qw(:sys_wait_h mkfifo);
 use Fcntl qw(:flock);
 use File::Spec;
 use File::Basename;
-use JSON::XS;
+use JSON::PP;
 use URI::Escape;
 use IO::Socket::UNIX qw( SOCK_STREAM SOMAXCONN );
 
