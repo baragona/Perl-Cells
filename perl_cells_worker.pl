@@ -14,6 +14,7 @@ use cells;
 
 
 
+my $root_lock_fh = cells::acquire_lock_for_path(cells::root_pid_path_for_pid($$));
 
 my $lock_fh = cells::acquire_lock_for_path(cells::lockfile_path_for_pid($$));
 my $ancestry_lock_fh;

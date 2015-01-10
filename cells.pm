@@ -24,6 +24,8 @@ sub delete_temp_files{
     delete_unmentioned_pidfiles_in_dir(sockets_dir(), [@active_pids] );
     delete_unmentioned_pidfiles_in_dir(working_pids_dir(), [@active_pids] );
     delete_unmentioned_pidfiles_in_dir(current_tasks_dir(), [@active_pids] );
+    delete_unmentioned_pidfiles_in_dir(root_pids_dir(), [@active_pids] );
+
 
     my @ancestry_dirs = get_directory_contents(ancestry_dir());
     for my $ancestry_dir(@ancestry_dirs){
@@ -99,6 +101,10 @@ sub current_tasks_dir{
     return File::Spec->catdir(root_dir(), 'current_tasks');
 }
 
+sub root_pids_dir{
+    return File::Spec->catdir(root_dir(), 'root_pids');
+}
+
 sub socket_path_for_pid{
     my $pid = shift;
     return File::Spec->catdir(sockets_dir(), $pid);
@@ -117,6 +123,11 @@ sub working_pids_path_for_pid{
 sub current_task_path_for_pid{
     my $pid = shift;
     return File::Spec->catdir(current_tasks_dir(), $pid);
+}
+
+sub root_pid_path_for_pid{
+    my $pid = shift;
+    return File::Spec->catdir(root_pids_dir(), $pid);
 }
 
 sub get_pids_from_lockfiles{
