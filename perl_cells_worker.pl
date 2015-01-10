@@ -16,7 +16,7 @@ use cells;
 
 
 my $lock_fh = cells::acquire_lock_for_path(cells::lockfile_path_for_pid($$));
-
+my $ancestry_lock_fh;
 my $lp = Lexical::Persistence->new();
 
 
@@ -53,7 +53,8 @@ while(1){
             my $current_task_file = cells::current_task_path_for_pid($$);
             cells::set_contents_of_file($current_task_file, $request_line);
 
-
+            my $ancestry_lockfile_path = cells::ancestry_path_for_parent_child_pids($parent_pid, $$);
+            $ancestry_lock_fh = cells::acquire_lock_for_path($ancestry_lockfile_path);
 
             my $working_pid_lock_fh = cells::acquire_lock_for_path(cells::working_pids_path_for_pid($$));
 
