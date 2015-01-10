@@ -27,12 +27,14 @@ sub delete_temp_files{
     delete_unmentioned_pidfiles_in_dir(root_pids_dir(), [@active_pids] );
 
 
-    my @ancestry_dirs = get_directory_contents(ancestry_dir());
-    for my $ancestry_dir(@ancestry_dirs){
-        delete_unmentioned_pidfiles_in_dir($ancestry_dir, [@active_pids]);
-        my @leftovers = get_directory_contents($ancestry_dir);
-        unless(@leftovers){
-            rmdir $ancestry_dir or die "can't delete $ancestry_dir: $!";
+    if(-e ancestry_dir()){
+        my @ancestry_dirs = get_directory_contents(ancestry_dir());
+        for my $ancestry_dir(@ancestry_dirs){
+            delete_unmentioned_pidfiles_in_dir($ancestry_dir, [@active_pids]);
+            my @leftovers = get_directory_contents($ancestry_dir);
+            unless(@leftovers){
+                rmdir $ancestry_dir or die "can't delete $ancestry_dir: $!";
+            }
         }
     }
 }
