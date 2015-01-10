@@ -7,6 +7,7 @@ use File::Basename;
 use JSON::PP;
 use URI::Escape;
 use IO::Socket::UNIX qw( SOCK_STREAM SOMAXCONN );
+use Carp;
 
 
 #THIS FUNCTION MOST LIKELY HAS RACE CONDITIONS
@@ -15,7 +16,7 @@ sub delete_temp_files{
         my @lockfiles = get_directory_contents(pidlocks_dir());
         for my $file(@lockfiles){
             if(not file_is_locked($file)){
-                unlink $file or die "can't delete $file: $!";
+                unlink $file or confess "can't delete $file: $!";
             }
         }
     }
@@ -33,7 +34,7 @@ sub delete_temp_files{
             delete_unmentioned_pidfiles_in_dir($ancestry_dir, [@active_pids]);
             my @leftovers = get_directory_contents($ancestry_dir);
             unless(@leftovers){
-                rmdir $ancestry_dir or die "can't delete $ancestry_dir: $!";
+                rmdir $ancestry_dir or confess "can't delete $ancestry_dir: $!";
             }
         }
     }
@@ -50,7 +51,7 @@ sub delete_unmentioned_pidfiles_in_dir{
             if($mentioned_pid_h{$pid}){
                 #mentioned, no delete
             }else{
-                unlink $pid_file or die "can't delete $pid_file: $!";
+                unlink $pid_file or confess "can't delete $pid_file: $!";
             }
         }
     }
@@ -76,7 +77,7 @@ sub root_dir{
 sub get_directory_contents{
     my $dir = shift;
 
-    opendir(my $dh, $dir) or die "Can't open directory $dir: $!\n";
+    opendir(my $dh, $dir) or confess "Can't open directory $dir: $!\n";
     my @files = grep !/^\.\.?$/, readdir($dh);
     @files = map {File::Spec->catdir($dir, $_)} @files;
     return @files;
@@ -153,18 +154,18 @@ sub ancestry_path_for_parent_child_pids{
 
 sub make_fifo{
     my $path = shift;
-    mkfifo($path, 0700) or die "mkfifo $path failed: $!";
+    mkfifo($path, 0700) or confess "mkfifo $path failed: $!";
 }
 
 sub open_for_reading{
     my $path = shift;
-    open(my $fh, "<", $path) or die "cannot open $path: $!";
+    open(my $fh, "<", $path) or confess "cannot open $path: $!";
     return $fh;
 }
 
 sub open_for_writing{
     my $path = shift;
-    open(my $fh, ">", $path) or die "cannot open $path: $!";
+    open(my $fh, ">", $path) or confess "cannot open $path: $!";
     return $fh;
 }
 
@@ -193,10 +194,10 @@ sub prep_and_check_dir{
     if(not -e $dir){
         my $parent = chop_path($dir);
         prep_and_check_dir($parent);
-        mkdir $dir or die "can't create dir: $!";
+        mkdir $dir or confess "can't create dir: $!";
     }
     if(not (-r $dir and -w $dir)){
-        die "something is wrong with $dir";
+        confess "something is wrong with $dir";
     }
 }
 
@@ -205,20 +206,20 @@ sub acquire_lockfile{ #NONBLOCKING THIS MAY NOT BE RIGHT
     my $lockfile = shift;
     my $lock_fh;
     unless(open $lock_fh, ">", $lockfile){
-        die "cant open lockfile: $!";
+        confess "cant open lockfile: $!";
     }
     if(flock($lock_fh, LOCK_EX|LOCK_NB)){
         #was able to lock
         return $lock_fh
     }else{
-        die "cant lock lockfile";
+        confess "cant lock lockfile";
     }
 }
 
 sub unlock_lock_fh{
     my $lock_fh = shift;
-    flock($lock_fh, LOCK_UN) or die "can't unlock: $!";
-    close($lock_fh) or die "can't close lock fh: $!";
+    flock($lock_fh, LOCK_UN) or confess "can't unlock: $!";
+    close($lock_fh) or confess "can't close lock fh: $!";
 }
 
 sub file_is_locked{
@@ -235,7 +236,7 @@ sub file_is_locked{
         return 0;
     }else{
         #already locked
-        close($lock_fh) or die "can't close lock fh: $!";
+        close($lock_fh) or confess "can't close lock fh: $!";
         return 1;
     }
 }
@@ -247,11 +248,11 @@ sub acquire_lock_for_path{
     return $lock_fh;
 }
 
-sub get_contents_of_file{ #RETURNS UNDEF IN CASE FILE DOES NOT EXIST
+sub get_contents_of_file{
     my $path = shift;
 
     if(not -e $path){
-        die "$path does not exist";
+        confess "$path does not exist";
     }
 
     if(open(my $f, '<', $path)){
@@ -259,7 +260,7 @@ sub get_contents_of_file{ #RETURNS UNDEF IN CASE FILE DOES NOT EXIST
         close($f);
         return $string;
     }else{
-        die "can't open $path: $!";
+        confess "can't open $path: $!";
     }
 }
 
@@ -269,7 +270,7 @@ sub set_contents_of_file{
     cells::ensure_parent_dir_exist($path);
     my $fh = cells::open_for_writing($path);
     print $fh $contents;
-    close($fh) or die "Cant close $path: $!";
+    close($fh) or confess "Cant close $path: $!";
 }
 
 sub encode_hash{
@@ -292,7 +293,7 @@ sub send_hash_to_pid_and_wait_for_response{
     my $socket = IO::Socket::UNIX->new(
        Type => SOCK_STREAM,
        Peer => $socket_path,
-    ) or die("Can't connect to server: $!\n");
+    ) or confess("Can't connect to server: $!\n");
 
     print $socket "$message\n";
     my $resp_line = <$socket> ;
@@ -314,7 +315,7 @@ sub create_listener_socket_for_pid{
        Type   => SOCK_STREAM,
        Local  => $socket_path,
        Listen => SOMAXCONN,
-    ) or die("Can't create server socket: $!\n");
+    ) or confess("Can't create server socket: $!\n");
     return $listener;
 }
 
@@ -340,6 +341,27 @@ sub get_parent_child_relationships{
     }
     
     return @relations;
+}
+
+sub get_default_pid_to_send_commands_to{
+    #Returns undef in case nothing found
+    my @alive_pids = get_active_pids();
+    if(-e last_finished_pid_path()){
+        my $pid = get_contents_of_file(last_finished_pid_path());
+        if(grep {$_ == $pid} @alive_pids){
+            return $pid;
+        }else{
+            carp "Last finished pid is no longer among the living";
+        }
+    }
+        
+    if(@alive_pids){
+        carp "using an essentially random living pid";
+        return $alive_pids[0];
+    }else{
+        return;
+    }
+    
 }
 
 1;

@@ -50,13 +50,13 @@ my @pids = cells::get_active_pids();
 
 print Dumper \@pids;
 
-my $pid = $pids[0];
+my $pid = cells::get_default_pid_to_send_commands_to();
 if($pid){
     my $mesg = {code => $ARGV[0]};
     my $resp = cells::send_hash_to_pid_and_wait_for_response($mesg, $pid);
     print Dumper $resp;
 }else{
-    warn "No process to send commands to";
+    warn "No process to send commands to.";
 }
 
 #front_page();
