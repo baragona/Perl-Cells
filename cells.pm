@@ -132,6 +132,10 @@ sub root_pid_path_for_pid{
     return File::Spec->catdir(root_pids_dir(), $pid);
 }
 
+sub last_finished_pid_path{
+    return File::Spec->catdir(root_dir(), 'last_finished_pid');
+}
+
 sub get_pids_from_lockfiles{
     my @pids = get_directory_contents(pidlocks_dir());
 
@@ -312,6 +316,30 @@ sub create_listener_socket_for_pid{
        Listen => SOMAXCONN,
     ) or die("Can't create server socket: $!\n");
     return $listener;
+}
+
+sub get_parent_child_relationships{
+    my @relations;
+    
+    if(-e ancestry_dir()){
+        my @ancestry_dirs = get_directory_contents(ancestry_dir());
+        for my $parent_dir(@ancestry_dirs){
+            my $parent_pid = basename $parent_dir;
+            my @child_files = get_directory_contents($parent_dir);
+            for my $child_file(@child_files){
+                if(file_is_locked($child_file)){
+                    my $child_pid = basename $child_file;
+                    my $relation = {
+                        parent => $parent_pid,
+                        child  => $child_pid
+                    };
+                    push @relations, $relation;
+                }
+            }
+        }
+    }
+    
+    return @relations;
 }
 
 1;

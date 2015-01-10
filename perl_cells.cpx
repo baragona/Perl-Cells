@@ -44,6 +44,8 @@ sub front_page {
 cells::delete_temp_files();
 cells::prep_and_check_dir(cells::pidlocks_dir($root_dir));
 
+print Dumper [cells::get_parent_child_relationships()];
+
 my @pids = cells::get_active_pids();
 
 print Dumper \@pids;

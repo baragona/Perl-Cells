@@ -82,6 +82,9 @@ while(1){
             print $socket "$response\n";
             close($socket) or die "Can't close socket: $!";
             cells::unlock_lock_fh($working_pid_lock_fh);
+            
+            cells::set_contents_of_file(cells::last_finished_pid_path(),$$);
+            
         }
 
 
