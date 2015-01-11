@@ -4,7 +4,14 @@
       <div id="content">
 
         <script>
-        
+
+        var addNewTripleCell = function(){
+            new_objects = makeTripleCell();
+            
+            $('#content').append(new_objects);
+            //new_objects.find('.input_cell').focus();
+        }
+
         var makeTripleCell = function(){
 
 
@@ -19,7 +26,8 @@
             var right_container = $('<div>').append([go_button]);
             right_container.addClass('right_container');
             
-            var triple_cell = [left_container,right_container];
+            var triple_cell = $('<div>').append([left_container,right_container]);
+            triple_cell.addClass(' triple_cell_outer ');
             var showError = function(errstr){
                 errors_cell.text(errstr);
             };
@@ -39,10 +47,11 @@
                         }else{
                             showError('response type '+parsed.response_type+': '+parsed.return_data);
                         }
-            
+                        addNewTripleCell();
                     },
                     error: function(xhr,message,message2){
                         showError('Ajax Error: '+message+': '+message2);
+                        addNewTripleCell;
                     }
                 });
             });
@@ -50,10 +59,7 @@
             return triple_cell;
         };
         
-
-
-        
-        $('#content').append(makeTripleCell());
+        addNewTripleCell();
         
         </script>
       </div>
