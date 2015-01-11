@@ -1,0 +1,32 @@
+
+<div id="page">
+
+      <div id="content">
+
+        <textarea id='code'><% first_code %></textarea>
+        <input type='button' id='go_button' value='Go'/>
+        <textarea id='output'><% first_code %></textarea>
+        <div class='errors'></div>
+        <script>
+        
+        $('#go_button').click(function(){
+            $.ajax({
+                type: "POST",
+                url: '/run_code',
+                data: {
+                    code : $('#code').val()
+                },
+                success: function(data){
+                    var parsed = JSON.parse(data);
+                    
+                    $('#output').val(data);
+                },
+                error: function(xhr,message,message2){
+                    $('.errors').append($('<div>').text(message+':'+message2));
+                }
+            });
+        });
+        
+        </script>
+      </div>
+</div>
