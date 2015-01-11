@@ -70,11 +70,14 @@ while(1){
             if($coderef){
                 try{
                     $resp_hash->{return_data} = $lp->call( $coderef );
+                    $resp_hash->{response_type} = 'good';
                 } catch {
-                    $resp_hash->{exec_error} = $_;
+                    $resp_hash->{return_data} = $_;
+                    $resp_hash->{response_type} = 'exec_error';
                 };
             }else{
-                $resp_hash->{comp_error} = $@;
+                $resp_hash->{return_data} = $@;
+                $resp_hash->{response_type} = 'comp_error';
             }
 
             my $response = cells::encode_hash($resp_hash);
@@ -89,7 +92,8 @@ while(1){
 
 
     }else{
-        $resp_hash->{misc_error} = "Fork failed";
+        $resp_hash->{return_data} = "Fork failed";
+        $resp_hash->{response_type} = 'misc_error';
         my $response = cells::encode_hash($resp_hash);
 
         print $socket "$response\n";
