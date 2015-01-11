@@ -3,29 +3,57 @@
 
       <div id="content">
 
-        <textarea id='code'><% first_code %></textarea>
-        <input type='button' id='go_button' value='Go'/>
-        <textarea id='output'><% first_code %></textarea>
-        <div class='errors'></div>
         <script>
         
-        $('#go_button').click(function(){
-            $.ajax({
-                type: "POST",
-                url: '/run_code',
-                data: {
-                    code : $('#code').val()
-                },
-                success: function(data){
-                    var parsed = JSON.parse(data);
-                    
-                    $('#output').val(data);
-                },
-                error: function(xhr,message,message2){
-                    $('.errors').append($('<div>').text(message+':'+message2));
-                }
+        var makeTripleCell = function(){
+
+
+            var input_cell = $('<textarea>').addClass(' text_cell input_cell ');
+            var output_cell = $('<textarea>').addClass(' text_cell output_cell ');
+            var errors_cell = $('<div>').addClass(' text_cell ');
+            var go_button = $('<input type="button">').attr('value','Go').addClass(' go_button ');
+            
+            var left_container = $('<div>').append([input_cell, output_cell, errors_cell]);
+            left_container.addClass('left_container');
+            
+            var right_container = $('<div>').append([go_button]);
+            right_container.addClass('right_container');
+            
+            var triple_cell = [left_container,right_container];
+            var showError = function(errstr){
+                errors_cell.text(errstr);
+            };
+            
+            go_button.click(function(){
+                $.ajax({
+                    type: "POST",
+                    url: '/run_code',
+                    data: {
+                        code : input_cell.val()
+                    },
+                    success: function(data){
+                        var parsed = JSON.parse(data);
+                        if(parsed.response_type == "good"){
+                            output_cell.val(parsed.return_data);
+                            showError('');
+                        }else{
+                            showError('response type '+parsed.response_type+': '+parsed.return_data);
+                        }
+            
+                    },
+                    error: function(xhr,message,message2){
+                        showError('Ajax Error: '+message+': '+message2);
+                    }
+                });
             });
-        });
+            
+            return triple_cell;
+        };
+        
+
+
+        
+        $('#content').append(makeTripleCell());
         
         </script>
       </div>

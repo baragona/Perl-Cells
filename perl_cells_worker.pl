@@ -8,6 +8,7 @@ use Lexical::Persistence;
 use IO::Socket::UNIX qw( SOCK_STREAM SOMAXCONN );
 use Data::Dumper;
 use Try::Tiny;
+use Data::Dumper;
 use cells;
 
 
@@ -69,8 +70,19 @@ while(1){
 
             if($coderef){
                 try{
-                    $resp_hash->{return_data} = $lp->call( $coderef );
-                    $resp_hash->{response_type} = 'good';
+                    my @code_returned_data = $lp->call( $coderef );
+                    try {
+                        local $Data::Dumper::Terse=1;
+                        local $Data::Dumper::Quotekeys=0;
+                        local $Data::Dumper::Useqq=1;
+                        local $Data::Dumper::Sortkeys=1;
+                        local $Data::Dumper::Indent=1;
+                        $resp_hash->{return_data} = join ",\n", (map {my $x=Dumper($_);chop $x; $x} @code_returned_data);
+                        $resp_hash->{response_type} = 'good';
+                    } catch {
+                        $resp_hash->{return_data} = $_;
+                        $resp_hash->{response_type} = 'dumping_error';
+                    }
                 } catch {
                     $resp_hash->{return_data} = $_;
                     $resp_hash->{response_type} = 'exec_error';
