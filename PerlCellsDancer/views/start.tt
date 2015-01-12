@@ -45,13 +45,16 @@
                             output_cell.val(parsed.return_data);
                             showError('');
                         }else{
-                            showError('response type '+parsed.response_type+': '+parsed.return_data);
+                            showError('Bad response_type '+parsed.response_type+': '+parsed.return_data);
                         }
                         addNewTripleCell();
                     },
                     error: function(xhr,message,message2){
-                        showError('Ajax Error: '+message+': '+message2);
-                        addNewTripleCell;
+                        if(xhr.status==0){
+                            showError('Ajax Error: connecting to server failed');
+                        }else{
+                            showError('Ajax Error: '+xhr.status+' '+message2+': '+xhr.responseText);
+                        }
                     }
                 });
             });

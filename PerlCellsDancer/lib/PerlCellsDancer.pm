@@ -23,7 +23,7 @@ post '/run_code' => sub{
     my $code = param "code";
 
     if(not defined $code){
-        status 500;
+        status 400; #bad request
         return "You didn't give any code to run";
     }
 
