@@ -293,13 +293,12 @@ sub send_hash_to_pid_and_wait_for_response{
     my $socket = IO::Socket::UNIX->new(
        Type => SOCK_STREAM,
        Peer => $socket_path,
-    ) or confess("Can't connect to server: $!\n");
+    ) or confess("Can't connect to server: $@\n");
 
     print $socket "$message\n";
     my $resp_line = <$socket> ;
     close $socket;
     chomp $resp_line;
-
     my $resp_hash = decode_hash($resp_line);
     return $resp_hash;
 }
@@ -348,10 +347,14 @@ sub get_default_pid_to_send_commands_to{
     my @alive_pids = get_active_pids();
     if(-e last_finished_pid_path()){
         my $pid = get_contents_of_file(last_finished_pid_path());
-        if(grep {$_ == $pid} @alive_pids){
-            return $pid;
+        if($pid =~ /\D/){
+            carp "Last finished pid is not a valid pid: '$pid'";
         }else{
-            carp "Last finished pid is no longer among the living";
+            if(grep {$_ == $pid} @alive_pids){
+                return $pid;
+            }else{
+                carp "Last finished pid is no longer among the living";
+            }
         }
     }
         
@@ -364,9 +367,24 @@ sub get_default_pid_to_send_commands_to{
     
 }
 
-sub kill_cousins_of_pid{
+#This function is hilariously inefficient, it should be made non recursive
+sub kill_descendants_of_pid{
     my $pid = shift;
     my @relations = get_parent_child_relationships();
+    
+    my @spawned_child_relations = grep {$_->{parent} == $pid} @relations;
+
+    my @child_pids = map {$_->{child}} @spawned_child_relations;
+    for my $child_pid(@child_pids){
+        warn "killing $child_pid 's children\n";
+        kill_descendants_of_pid($child_pid);
+        warn "killing $child_pid\n";
+        my $n_killed = kill 'KILL', $child_pid;
+        if(not $n_killed){
+            carp "Failed to kill PID $child_pid";
+        }
+    }
+
 }
 
 1;

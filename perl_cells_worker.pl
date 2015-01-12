@@ -37,6 +37,10 @@ while(1){
     my $resp_hash={};
 
     my $parent_pid = $$;
+    
+    #Kill all previous forks before creating a new one
+    cells::kill_descendants_of_pid($parent_pid);
+    
     my $fork_pid = fork();
 
     if(defined($fork_pid)){
