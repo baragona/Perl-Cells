@@ -364,4 +364,9 @@ sub get_default_pid_to_send_commands_to{
     
 }
 
+sub kill_cousins_of_pid{
+    my $pid = shift;
+    my @relations = get_parent_child_relationships();
+}
+
 1;

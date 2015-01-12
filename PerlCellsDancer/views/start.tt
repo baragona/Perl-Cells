@@ -3,6 +3,8 @@
 
       <div id="content">
 
+        <input type="button" value="New Cell" id="new_cell_button" />
+
         <script>
 
         var addNewTripleCell = function(){
@@ -40,14 +42,20 @@
                         code : input_cell.val()
                     },
                     success: function(data){
-                        var parsed = JSON.parse(data);
+                        var parsed;
+                        try{
+                            parsed = JSON.parse(data);
+                        }catch(e){
+                            showError('JSON decoding error: '+e);
+                            return;
+                        }
                         if(parsed.response_type == "good"){
                             output_cell.val(parsed.return_data);
                             showError('');
                         }else{
                             showError('Bad response_type '+parsed.response_type+': '+parsed.return_data);
                         }
-                        addNewTripleCell();
+                        
                     },
                     error: function(xhr,message,message2){
                         if(xhr.status==0){
@@ -62,8 +70,10 @@
             return triple_cell;
         };
         
-        addNewTripleCell();
-        
+        addNewTripleCell(); // add a cell to begin with
+        $('#new_cell_button').click(function(){
+            addNewTripleCell(); // add one when the button is pressed
+        });
         </script>
       </div>
 </div>
